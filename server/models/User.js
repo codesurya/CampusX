@@ -8,6 +8,7 @@ const userSchema = new mongoose.Schema(
     collegeId: { type: String, default: "" },
     branch: { type: String, default: "B.Tech CSE" },
     semester: { type: Number, default: 1 },
+    role: { type: String, enum: ["student", "admin"], default: "student" },
   },
   { timestamps: true }
 );
