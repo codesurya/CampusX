@@ -18,6 +18,7 @@ app.use("/api/clubs", require("./routes/clubs"));
 app.use("/api/marketplace", require("./routes/marketplace"));
 app.use("/api/lostfound", require("./routes/lostfound"));
 app.use("/api/ai", require("./routes/ai"));
+app.use("/api/admin", require("./routes/admin"));
 
 // Connection options – Node.js v26 ships with a newer OpenSSL that can
 // cause TLS handshake failures with MongoDB Atlas.  Setting tls: true and

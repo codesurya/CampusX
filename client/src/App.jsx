@@ -2393,42 +2393,1170 @@ function ProfileManager({ user, onProfileUpdated }) {
           </label>
         </div>
 
-        <div style={{ background: "#eff6ff", border: "1px dashed var(--blue)", borderRadius: "10px", padding: "0.8rem", marginTop: "0.5rem" }}>
-          <strong style={{ fontSize: "0.85rem", color: "var(--navy)" }}>🧪 Live Demonstration Role Switcher</strong>
-          <p className="small muted" style={{ margin: "0.3rem 0 0.5rem" }}>
-            Easily toggle between Student and Administrator roles to demonstrate admin privilege controls in Notices, Events, and Clubs moderation!
-          </p>
-          <div style={{ display: "flex", gap: "0.8rem" }}>
-            <label style={{ display: "flex", alignItems: "center", gap: "0.4rem", cursor: "pointer", fontSize: "0.85rem" }}>
-              <input
-                type="radio"
-                name="role"
-                value="student"
-                checked={form.role === "student"}
-                onChange={() => setForm({ ...form, role: "student" })}
-              />
-              Student Role
-            </label>
-            <label style={{ display: "flex", alignItems: "center", gap: "0.4rem", cursor: "pointer", fontSize: "0.85rem" }}>
-              <input
-                type="radio"
-                name="role"
-                value="admin"
-                checked={form.role === "admin"}
-                onChange={() => setForm({ ...form, role: "admin" })}
-              />
-              Administrator Role
-            </label>
-          </div>
-        </div>
-
         <div className="form-actions">
           <button type="submit" className="btn-sm" disabled={saving}>
             {saving ? "Saving…" : "Save Changes"}
           </button>
         </div>
       </form>
+
+      {user.role === "admin" && (
+        <div style={{ background: "#fef2f2", border: "1px solid #fecaca", borderRadius: "12px", padding: "1rem", marginTop: "0.5rem" }}>
+          <strong style={{ color: "var(--red)", fontSize: "0.95rem" }}>🛡️ Verified Administrator Account</strong>
+          <p className="small muted" style={{ margin: "0.25rem 0 0.6rem" }}>
+            You have full system access to manage student accounts, circulars, routines, and campus moderation via the Admin Panel.
+          </p>
+        </div>
+      )}
     </section>
+  );
+}
+
+// ─── Administrator Control Panel ───────────────────────────────────────────
+function AdminDashboard({ user, onSwitchToStudent }) {
+  const [tab, setTab] = useState("Overview");
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [msg, setMsg] = useState("");
+
+  // Data collections
+  const [users, setUsers] = useState([]);
+  const [userQuery, setUserQuery] = useState("");
+  const [userRoleFilter, setUserRoleFilter] = useState("all");
+
+  const [notices, setNotices] = useState([]);
+  const [showNoticeForm, setShowNoticeForm] = useState(false);
+  const [noticeForm, setNoticeForm] = useState({
+    title: "",
+    body: "",
+    category: "General",
+    priority: "normal",
+    postedBy: "Campus Administration",
+  });
+
+  const [routines, setRoutines] = useState([]);
+  const [notes, setNotes] = useState([]);
+  const [events, setEvents] = useState([]);
+  const [showEventForm, setShowEventForm] = useState(false);
+  const [eventForm, setEventForm] = useState({
+    title: "",
+    description: "",
+    date: "",
+    time: "",
+    venue: "",
+    category: "Technical",
+    organizer: "Campus Administration",
+    capacity: 200,
+  });
+
+  const [clubs, setClubs] = useState([]);
+  const [showClubForm, setShowClubForm] = useState(false);
+  const [clubForm, setClubForm] = useState({
+    name: "",
+    category: "Technical",
+    description: "",
+    coordinator: "",
+    contactEmail: "",
+    meetingSchedule: "Weekly",
+    icon: "🎯",
+  });
+
+  const [marketItems, setMarketItems] = useState([]);
+  const [lostFound, setLostFound] = useState([]);
+
+  // Fetch admin stats
+  const fetchStats = async () => {
+    try {
+      const data = await api("/admin/stats");
+      setStats(data);
+    } catch (err) {
+      setError(err.message || "Failed to fetch stats");
+    }
+  };
+
+  // Fetch active tab data
+  const loadTabData = async (currentTab) => {
+    setError("");
+    setMsg("");
+    setLoading(true);
+    try {
+      if (currentTab === "Overview") await fetchStats();
+      if (currentTab === "Students") {
+        const u = await api("/admin/users");
+        setUsers(u);
+      }
+      if (currentTab === "Notices") {
+        const n = await api("/admin/notices");
+        setNotices(n);
+      }
+      if (currentTab === "Routines") {
+        const r = await api("/admin/routines");
+        setRoutines(r);
+      }
+      if (currentTab === "Notes") {
+        const nt = await api("/admin/notes");
+        setNotes(nt);
+      }
+      if (currentTab === "Events") {
+        const ev = await api("/admin/events");
+        setEvents(ev);
+      }
+      if (currentTab === "Clubs") {
+        const cl = await api("/admin/clubs");
+        setClubs(cl);
+      }
+      if (currentTab === "Marketplace") {
+        const m = await api("/admin/marketplace");
+        setMarketItems(m);
+      }
+      if (currentTab === "Lost & Found") {
+        const lf = await api("/admin/lostfound");
+        setLostFound(lf);
+      }
+    } catch (err) {
+      setError(err.message || `Failed to load ${currentTab} data`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchStats();
+    loadTabData(tab);
+  }, [tab]);
+
+  // Security guard
+  if (!user || user.role !== "admin") {
+    return (
+      <section className="panel empty">
+        <h2 style={{ color: "var(--red)" }}>403 – Access Forbidden</h2>
+        <p className="muted">Administrator privileges are required to view this panel.</p>
+        <button type="button" className="btn-sm" onClick={onSwitchToStudent}>
+          Return to Student Dashboard
+        </button>
+      </section>
+    );
+  }
+
+  // User role toggle
+  const handleToggleRole = async (targetUser) => {
+    const nextRole = targetUser.role === "admin" ? "student" : "admin";
+    if (
+      !window.confirm(
+        `Are you sure you want to change ${targetUser.name}'s role to ${nextRole.toUpperCase()}?`
+      )
+    )
+      return;
+    try {
+      await api(`/admin/users/${targetUser._id}/role`, {
+        method: "PATCH",
+        body: { role: nextRole },
+      });
+      setMsg(`Updated ${targetUser.name}'s role to ${nextRole}`);
+      setUsers(
+        users.map((u) => (u._id === targetUser._id ? { ...u, role: nextRole } : u))
+      );
+    } catch (err) {
+      setError(err.message || "Failed to update user role");
+    }
+  };
+
+  // Delete user account
+  const handleDeleteUser = async (targetUser) => {
+    if (
+      !window.confirm(
+        `⚠️ PERMANENT DELETION WARNING:\n\nDelete user ${targetUser.email} (${targetUser.name})? All their attendance and routine records will be deleted.`
+      )
+    )
+      return;
+    try {
+      await api(`/admin/users/${targetUser._id}`, { method: "DELETE" });
+      setMsg(`User ${targetUser.email} was removed.`);
+      setUsers(users.filter((u) => u._id !== targetUser._id));
+    } catch (err) {
+      setError(err.message || "Failed to delete user");
+    }
+  };
+
+  // Notice operations
+  const handleCreateNotice = async (e) => {
+    e.preventDefault();
+    try {
+      const created = await api("/admin/notices", { method: "POST", body: noticeForm });
+      setNotices([created, ...notices]);
+      setShowNoticeForm(false);
+      setNoticeForm({
+        title: "",
+        body: "",
+        category: "General",
+        priority: "normal",
+        postedBy: "Campus Administration",
+      });
+      setMsg("Official circular published successfully!");
+    } catch (err) {
+      setError(err.message || "Failed to create notice");
+    }
+  };
+
+  const handleDeleteNotice = async (id) => {
+    if (!window.confirm("Delete this college notice?")) return;
+    try {
+      await api(`/admin/notices/${id}`, { method: "DELETE" });
+      setNotices(notices.filter((n) => n._id !== id));
+      setMsg("Notice deleted.");
+    } catch (err) {
+      setError(err.message || "Failed to delete notice");
+    }
+  };
+
+  // Routine operations
+  const handleDeleteRoutine = async (id) => {
+    if (!window.confirm("Delete this routine slot?")) return;
+    try {
+      await api(`/admin/routines/${id}`, { method: "DELETE" });
+      setRoutines(routines.filter((r) => r._id !== id));
+      setMsg("Routine slot removed.");
+    } catch (err) {
+      setError(err.message || "Failed to delete routine slot");
+    }
+  };
+
+  // Note operations
+  const handleDeleteNote = async (id) => {
+    if (!window.confirm("Delete this study note from repository?")) return;
+    try {
+      await api(`/admin/notes/${id}`, { method: "DELETE" });
+      setNotes(notes.filter((n) => n._id !== id));
+      setMsg("Note resource deleted.");
+    } catch (err) {
+      setError(err.message || "Failed to delete note");
+    }
+  };
+
+  // Event operations
+  const handleCreateEvent = async (e) => {
+    e.preventDefault();
+    try {
+      const created = await api("/admin/events", { method: "POST", body: eventForm });
+      setEvents([created, ...events]);
+      setShowEventForm(false);
+      setEventForm({
+        title: "",
+        description: "",
+        date: "",
+        time: "",
+        venue: "",
+        category: "Technical",
+        organizer: "Campus Administration",
+        capacity: 200,
+      });
+      setMsg("Campus event published!");
+    } catch (err) {
+      setError(err.message || "Failed to create event");
+    }
+  };
+
+  const handleDeleteEvent = async (id) => {
+    if (!window.confirm("Cancel and delete this campus event?")) return;
+    try {
+      await api(`/admin/events/${id}`, { method: "DELETE" });
+      setEvents(events.filter((e) => e._id !== id));
+      setMsg("Event cancelled and removed.");
+    } catch (err) {
+      setError(err.message || "Failed to delete event");
+    }
+  };
+
+  // Club operations
+  const handleCreateClub = async (e) => {
+    e.preventDefault();
+    try {
+      const created = await api("/admin/clubs", { method: "POST", body: clubForm });
+      setClubs([...clubs, created]);
+      setShowClubForm(false);
+      setClubForm({
+        name: "",
+        category: "Technical",
+        description: "",
+        coordinator: "",
+        contactEmail: "",
+        meetingSchedule: "Weekly",
+        icon: "🎯",
+      });
+      setMsg("Student club registered!");
+    } catch (err) {
+      setError(err.message || "Failed to register club");
+    }
+  };
+
+  const handleDeleteClub = async (id) => {
+    if (!window.confirm("Delete this student club and membership records?")) return;
+    try {
+      await api(`/admin/clubs/${id}`, { method: "DELETE" });
+      setClubs(clubs.filter((c) => c._id !== id));
+      setMsg("Club removed.");
+    } catch (err) {
+      setError(err.message || "Failed to delete club");
+    }
+  };
+
+  // Marketplace moderation
+  const handleToggleMarketStatus = async (item) => {
+    const nextStatus = item.status === "Available" ? "Sold" : "Available";
+    try {
+      const updated = await api(`/admin/marketplace/${item._id}/status`, {
+        method: "PATCH",
+        body: { status: nextStatus },
+      });
+      setMarketItems(marketItems.map((it) => (it._id === item._id ? updated : it)));
+    } catch (err) {
+      setError(err.message || "Failed to update item status");
+    }
+  };
+
+  const handleDeleteMarketItem = async (id) => {
+    if (!window.confirm("Remove this marketplace listing?")) return;
+    try {
+      await api(`/admin/marketplace/${id}`, { method: "DELETE" });
+      setMarketItems(marketItems.filter((it) => it._id !== id));
+      setMsg("Listing removed.");
+    } catch (err) {
+      setError(err.message || "Failed to delete listing");
+    }
+  };
+
+  // Lost & Found moderation
+  const handleToggleLostStatus = async (item) => {
+    const nextStatus = item.status === "open" ? "resolved" : "open";
+    try {
+      const updated = await api(`/admin/lostfound/${item._id}/status`, {
+        method: "PATCH",
+        body: { status: nextStatus },
+      });
+      setLostFound(lostFound.map((it) => (it._id === item._id ? updated : it)));
+    } catch (err) {
+      setError(err.message || "Failed to update report status");
+    }
+  };
+
+  const handleDeleteLostFound = async (id) => {
+    if (!window.confirm("Delete this lost & found report?")) return;
+    try {
+      await api(`/admin/lostfound/${id}`, { method: "DELETE" });
+      setLostFound(lostFound.filter((it) => it._id !== id));
+      setMsg("Report removed.");
+    } catch (err) {
+      setError(err.message || "Failed to delete report");
+    }
+  };
+
+  // Filtered users for user management tab
+  const filteredUsers = users.filter((u) => {
+    const matchRole = userRoleFilter === "all" || u.role === userRoleFilter;
+    const q = userQuery.toLowerCase();
+    const matchQ =
+      !q ||
+      u.name.toLowerCase().includes(q) ||
+      u.email.toLowerCase().includes(q) ||
+      (u.collegeId && u.collegeId.toLowerCase().includes(q)) ||
+      (u.branch && u.branch.toLowerCase().includes(q));
+    return matchRole && matchQ;
+  });
+
+  const ADMIN_TABS = [
+    "Overview",
+    "Students",
+    "Notices",
+    "Routines",
+    "Notes",
+    "Events",
+    "Clubs",
+    "Marketplace",
+    "Lost & Found",
+  ];
+
+  return (
+    <div style={{ display: "grid", gap: "1.2rem" }}>
+      {/* Admin Top Header */}
+      <div className="admin-header">
+        <div>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+            <h1 style={{ margin: 0, fontSize: "1.5rem" }}>CampusX Administrator Portal</h1>
+            <span className="admin-badge">VERIFIED ADMIN</span>
+          </div>
+          <p style={{ margin: "0.3rem 0 0", fontSize: "0.85rem", opacity: 0.85 }}>
+            Centralized Management for Academic Records, Students, Moderation & Circulars
+          </p>
+        </div>
+        <button
+          type="button"
+          className="btn-ghost"
+          style={{ background: "#fff", color: "var(--ink)", borderColor: "#fff", fontWeight: 700 }}
+          onClick={onSwitchToStudent}
+        >
+          ↩️ Return to Student View
+        </button>
+      </div>
+
+      {msg && <p className="small" style={{ color: "var(--green)", fontWeight: 700, margin: 0 }}>✓ {msg}</p>}
+      {error && <p className="error">{error}</p>}
+
+      {/* Admin Subtabs Navigation */}
+      <div className="admin-nav">
+        {ADMIN_TABS.map((t) => (
+          <button
+            key={t}
+            type="button"
+            className={tab === t ? "active" : ""}
+            onClick={() => setTab(t)}
+          >
+            {t === "Overview" && "📊 "}
+            {t === "Students" && "👥 "}
+            {t === "Notices" && "📢 "}
+            {t === "Routines" && "📅 "}
+            {t === "Notes" && "📚 "}
+            {t === "Events" && "🎉 "}
+            {t === "Clubs" && "🚀 "}
+            {t === "Marketplace" && "🛒 "}
+            {t === "Lost & Found" && "🔍 "}
+            {t}
+          </button>
+        ))}
+      </div>
+
+      {loading && <p className="muted small">Loading {tab} records from database…</p>}
+
+      {/* ── TAB 1: OVERVIEW & STATS ── */}
+      {tab === "Overview" && stats && (
+        <section className="panel">
+          <h2>Campus-Wide Statistics & System Metrics</h2>
+          <div className="stat-grid-4">
+            <div className="stat-box">
+              <span>REGISTERED STUDENTS</span>
+              <strong>{stats.users?.students || 0}</strong>
+              <small className="muted">Total enrolled accounts</small>
+            </div>
+            <div className="stat-box">
+              <span>ADMINISTRATORS</span>
+              <strong style={{ color: "var(--red)" }}>{stats.users?.admins || 0}</strong>
+              <small className="muted">System admin access</small>
+            </div>
+            <div className="stat-box">
+              <span>ATTENDANCE RECORDS</span>
+              <strong style={{ color: "var(--blue)" }}>{stats.academic?.attendance || 0}</strong>
+              <small className="muted">Subject records tracked</small>
+            </div>
+            <div className="stat-box">
+              <span>CLASS TIMETABLES</span>
+              <strong style={{ color: "var(--green)" }}>{stats.academic?.routines || 0}</strong>
+              <small className="muted">Weekly schedule slots</small>
+            </div>
+            <div className="stat-box">
+              <span>NOTICES & CIRCULARS</span>
+              <strong>{stats.campus?.notices || 0}</strong>
+              <small className="muted">Active publications</small>
+            </div>
+            <div className="stat-box">
+              <span>NOTES REPOSITORY</span>
+              <strong>{stats.academic?.notes || 0}</strong>
+              <small className="muted">Syllabus PDF files</small>
+            </div>
+            <div className="stat-box">
+              <span>CAMPUS EVENTS</span>
+              <strong>{stats.campus?.events || 0}</strong>
+              <small className="muted">Fests & workshops</small>
+            </div>
+            <div className="stat-box">
+              <span>STUDENT CLUBS</span>
+              <strong>{stats.campus?.clubs || 0}</strong>
+              <small className="muted">Recognized societies</small>
+            </div>
+            <div className="stat-box">
+              <span>MARKETPLACE ITEMS</span>
+              <strong>{stats.services?.marketplace || 0}</strong>
+              <small className="muted">Peer-to-peer listings</small>
+            </div>
+            <div className="stat-box">
+              <span>LOST & FOUND REPORTS</span>
+              <strong>{stats.services?.lostfound || 0}</strong>
+              <small className="muted">Reported campus items</small>
+            </div>
+          </div>
+
+          <h3 style={{ fontSize: "1rem", marginTop: "1.2rem" }}>Quick Admin Navigation</h3>
+          <div className="quick-grid">
+            <button type="button" className="quick-btn" onClick={() => setTab("Students")}>
+              <strong>👥 Manage Students</strong>
+              <span>Review roles & user profiles</span>
+            </button>
+            <button type="button" className="quick-btn" onClick={() => setTab("Notices")}>
+              <strong>📢 Post College Notice</strong>
+              <span>Exam datesheets & holiday alerts</span>
+            </button>
+            <button type="button" className="quick-btn" onClick={() => setTab("Events")}>
+              <strong>🎉 Organize Event</strong>
+              <span>Create hackathons & fests</span>
+            </button>
+            <button type="button" className="quick-btn" onClick={() => setTab("Marketplace")}>
+              <strong>🛒 Moderate Marketplace</strong>
+              <span>Manage student sales listings</span>
+            </button>
+          </div>
+        </section>
+      )}
+
+      {/* ── TAB 2: STUDENT ACCOUNTS ── */}
+      {tab === "Students" && (
+        <section className="panel">
+          <div className="panel-head">
+            <h2>User Account Management ({filteredUsers.length})</h2>
+          </div>
+
+          <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", marginBottom: "1rem" }}>
+            <input
+              type="text"
+              placeholder="Search by student name, roll number, email, or department..."
+              value={userQuery}
+              onChange={(e) => setUserQuery(e.target.value)}
+              style={{ flex: 1, minWidth: "220px", padding: "0.55rem 0.8rem", border: "1px solid var(--line)", borderRadius: "8px", font: "inherit" }}
+            />
+            <select
+              value={userRoleFilter}
+              onChange={(e) => setUserRoleFilter(e.target.value)}
+              style={{ padding: "0.55rem 0.8rem", border: "1px solid var(--line)", borderRadius: "8px", font: "inherit" }}
+            >
+              <option value="all">All Roles</option>
+              <option value="student">Students Only</option>
+              <option value="admin">Admins Only</option>
+            </select>
+          </div>
+
+          <div className="admin-table-wrap">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Student Name</th>
+                  <th>Email</th>
+                  <th>Roll / ID</th>
+                  <th>Branch & Sem</th>
+                  <th>Role</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredUsers.map((u) => (
+                  <tr key={u._id}>
+                    <td><strong>{u.name}</strong></td>
+                    <td className="muted">{u.email}</td>
+                    <td>{u.collegeId || "—"}</td>
+                    <td>{u.branch} · Sem {u.semester}</td>
+                    <td>
+                      <span className={"badge " + (u.role === "admin" ? "badge-red" : "badge-blue")}>
+                        {u.role === "admin" ? "ADMIN" : "STUDENT"}
+                      </span>
+                    </td>
+                    <td>
+                      {u._id !== user.id ? (
+                        <>
+                          <button
+                            type="button"
+                            className="btn-action-edit"
+                            onClick={() => handleToggleRole(u)}
+                          >
+                            {u.role === "admin" ? "Demote" : "Promote to Admin"}
+                          </button>
+                          <button
+                            type="button"
+                            className="btn-action-del"
+                            onClick={() => handleDeleteUser(u)}
+                          >
+                            Delete
+                          </button>
+                        </>
+                      ) : (
+                        <span className="muted small">(Current User)</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+
+      {/* ── TAB 3: NOTICES MANAGEMENT ── */}
+      {tab === "Notices" && (
+        <section className="panel">
+          <div className="panel-head">
+            <h2>College Notices Management ({notices.length})</h2>
+            <button
+              type="button"
+              className="btn-sm"
+              onClick={() => setShowNoticeForm(!showNoticeForm)}
+            >
+              {showNoticeForm ? "Cancel" : "+ Post Notice"}
+            </button>
+          </div>
+
+          {showNoticeForm && (
+            <form className="form-card" onSubmit={handleCreateNotice} style={{ marginBottom: "1.2rem" }}>
+              <strong>Publish Official Campus Circular</strong>
+              <div className="form-grid">
+                <label>
+                  Notice Title *
+                  <input
+                    value={noticeForm.title}
+                    onChange={(e) => setNoticeForm({ ...noticeForm, title: e.target.value })}
+                    placeholder="e.g. End-Semester Examination Schedule"
+                    required
+                  />
+                </label>
+                <label>
+                  Category
+                  <select
+                    value={noticeForm.category}
+                    onChange={(e) => setNoticeForm({ ...noticeForm, category: e.target.value })}
+                  >
+                    <option value="Exam">Exam</option>
+                    <option value="Holiday">Holiday</option>
+                    <option value="Academic">Academic</option>
+                    <option value="General">General</option>
+                    <option value="Event">Event</option>
+                  </select>
+                </label>
+                <label>
+                  Priority
+                  <select
+                    value={noticeForm.priority}
+                    onChange={(e) => setNoticeForm({ ...noticeForm, priority: e.target.value })}
+                  >
+                    <option value="normal">Normal Priority</option>
+                    <option value="high">Urgent Priority (Red Banner)</option>
+                  </select>
+                </label>
+                <label>
+                  Issuing Authority
+                  <input
+                    value={noticeForm.postedBy}
+                    onChange={(e) => setNoticeForm({ ...noticeForm, postedBy: e.target.value })}
+                    placeholder="e.g. Dean Academic Affairs"
+                  />
+                </label>
+              </div>
+              <label>
+                Full Notice Description *
+                <textarea
+                  className="notice-textarea"
+                  value={noticeForm.body}
+                  onChange={(e) => setNoticeForm({ ...noticeForm, body: e.target.value })}
+                  placeholder="Enter dates, guidelines, eligibility criteria..."
+                  rows={4}
+                  required
+                />
+              </label>
+              <div className="form-actions">
+                <button type="button" className="btn-ghost" onClick={() => setShowNoticeForm(false)}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn-sm">
+                  Publish Circular
+                </button>
+              </div>
+            </form>
+          )}
+
+          <div className="admin-table-wrap">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Title</th>
+                  <th>Category</th>
+                  <th>Priority</th>
+                  <th>Issued By</th>
+                  <th>Date</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {notices.map((n) => (
+                  <tr key={n._id}>
+                    <td><strong>{n.title}</strong></td>
+                    <td><span className="badge badge-blue">{n.category}</span></td>
+                    <td>
+                      <span className={"badge " + (n.priority === "high" ? "badge-red" : "badge-green")}>
+                        {n.priority}
+                      </span>
+                    </td>
+                    <td>{n.postedBy || "Administration"}</td>
+                    <td className="muted">{new Date(n.createdAt).toLocaleDateString("en-IN")}</td>
+                    <td>
+                      <button
+                        type="button"
+                        className="btn-action-del"
+                        onClick={() => handleDeleteNotice(n._id)}
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+
+      {/* ── TAB 4: ROUTINES MANAGEMENT ── */}
+      {tab === "Routines" && (
+        <section className="panel">
+          <div className="panel-head">
+            <h2>Class Timetable Slots Across Campus ({routines.length})</h2>
+          </div>
+          <div className="admin-table-wrap">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Day</th>
+                  <th>Subject</th>
+                  <th>Time Slot</th>
+                  <th>Faculty</th>
+                  <th>Room</th>
+                  <th>Assigned User</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {routines.map((r) => (
+                  <tr key={r._id}>
+                    <td><strong>{DAY_NAMES[r.day] || "Mon"}</strong></td>
+                    <td>{r.subject}</td>
+                    <td className="muted">{r.startTime} – {r.endTime}</td>
+                    <td>{r.faculty || "TBA"}</td>
+                    <td>{r.room || "TBA"}</td>
+                    <td className="small muted">{r.user?.name || "Student"}</td>
+                    <td>
+                      <button
+                        type="button"
+                        className="btn-action-del"
+                        onClick={() => handleDeleteRoutine(r._id)}
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+
+      {/* ── TAB 5: NOTES REPOSITORY ── */}
+      {tab === "Notes" && (
+        <section className="panel">
+          <div className="panel-head">
+            <h2>NotesHub Resources Repository ({notes.length})</h2>
+          </div>
+          <div className="admin-table-wrap">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Subject</th>
+                  <th>Title</th>
+                  <th>Unit</th>
+                  <th>Format</th>
+                  <th>Uploaded By</th>
+                  <th>Downloads</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {notes.map((nt) => (
+                  <tr key={nt._id}>
+                    <td><span className="badge badge-blue">{nt.subject}</span></td>
+                    <td><strong>{nt.title}</strong></td>
+                    <td>{nt.unit || "All"}</td>
+                    <td>{nt.fileType || "PDF"}</td>
+                    <td className="muted">{nt.uploadedBy || "Student"}</td>
+                    <td>📥 {nt.downloads || 0}</td>
+                    <td>
+                      <button
+                        type="button"
+                        className="btn-action-del"
+                        onClick={() => handleDeleteNote(nt._id)}
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+
+      {/* ── TAB 6: EVENTS MANAGEMENT ── */}
+      {tab === "Events" && (
+        <section className="panel">
+          <div className="panel-head">
+            <h2>Campus Fests & Events Management ({events.length})</h2>
+            <button
+              type="button"
+              className="btn-sm"
+              onClick={() => setShowEventForm(!showEventForm)}
+            >
+              {showEventForm ? "Cancel" : "+ Add Event"}
+            </button>
+          </div>
+
+          {showEventForm && (
+            <form className="form-card" onSubmit={handleCreateEvent} style={{ marginBottom: "1rem" }}>
+              <strong>Publish New Campus Event</strong>
+              <div className="form-grid">
+                <label>
+                  Event Title *
+                  <input
+                    value={eventForm.title}
+                    onChange={(e) => setEventForm({ ...eventForm, title: e.target.value })}
+                    required
+                  />
+                </label>
+                <label>
+                  Category
+                  <select
+                    value={eventForm.category}
+                    onChange={(e) => setEventForm({ ...eventForm, category: e.target.value })}
+                  >
+                    <option value="Technical">Technical</option>
+                    <option value="Cultural">Cultural</option>
+                    <option value="Sports">Sports</option>
+                    <option value="Workshop">Workshop</option>
+                    <option value="Seminar">Seminar</option>
+                  </select>
+                </label>
+                <label>
+                  Date *
+                  <input
+                    value={eventForm.date}
+                    onChange={(e) => setEventForm({ ...eventForm, date: e.target.value })}
+                    placeholder="e.g. 20 Nov 2026"
+                    required
+                  />
+                </label>
+                <label>
+                  Time *
+                  <input
+                    value={eventForm.time}
+                    onChange={(e) => setEventForm({ ...eventForm, time: e.target.value })}
+                    placeholder="e.g. 10:00 AM"
+                    required
+                  />
+                </label>
+                <label>
+                  Venue *
+                  <input
+                    value={eventForm.venue}
+                    onChange={(e) => setEventForm({ ...eventForm, venue: e.target.value })}
+                    required
+                  />
+                </label>
+                <label>
+                  Organizer
+                  <input
+                    value={eventForm.organizer}
+                    onChange={(e) => setEventForm({ ...eventForm, organizer: e.target.value })}
+                  />
+                </label>
+              </div>
+              <label>
+                Description *
+                <textarea
+                  className="notice-textarea"
+                  value={eventForm.description}
+                  onChange={(e) => setEventForm({ ...eventForm, description: e.target.value })}
+                  rows={3}
+                  required
+                />
+              </label>
+              <div className="form-actions">
+                <button type="button" className="btn-ghost" onClick={() => setShowEventForm(false)}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn-sm">
+                  Publish Event
+                </button>
+              </div>
+            </form>
+          )}
+
+          <div className="admin-table-wrap">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Title</th>
+                  <th>Category</th>
+                  <th>Date & Time</th>
+                  <th>Venue</th>
+                  <th>RSVPs</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {events.map((ev) => (
+                  <tr key={ev._id}>
+                    <td><strong>{ev.title}</strong></td>
+                    <td><span className="badge badge-amber">{ev.category}</span></td>
+                    <td className="muted">{ev.date} · {ev.time}</td>
+                    <td>{ev.venue}</td>
+                    <td>👥 {ev.registeredCount || ev.registeredUsers?.length || 0} registered</td>
+                    <td>
+                      <button
+                        type="button"
+                        className="btn-action-del"
+                        onClick={() => handleDeleteEvent(ev._id)}
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+
+      {/* ── TAB 7: CLUBS MANAGEMENT ── */}
+      {tab === "Clubs" && (
+        <section className="panel">
+          <div className="panel-head">
+            <h2>Clubs & Student Societies ({clubs.length})</h2>
+            <button
+              type="button"
+              className="btn-sm"
+              onClick={() => setShowClubForm(!showClubForm)}
+            >
+              {showClubForm ? "Cancel" : "+ Add Club"}
+            </button>
+          </div>
+
+          {showClubForm && (
+            <form className="form-card" onSubmit={handleCreateClub} style={{ marginBottom: "1rem" }}>
+              <strong>Register Official Student Society</strong>
+              <div className="form-grid">
+                <label>
+                  Club Name *
+                  <input
+                    value={clubForm.name}
+                    onChange={(e) => setClubForm({ ...clubForm, name: e.target.value })}
+                    required
+                  />
+                </label>
+                <label>
+                  Category
+                  <select
+                    value={clubForm.category}
+                    onChange={(e) => setClubForm({ ...clubForm, category: e.target.value })}
+                  >
+                    <option value="Technical">Technical</option>
+                    <option value="Cultural">Cultural</option>
+                    <option value="Sports">Sports</option>
+                    <option value="Innovation">Innovation</option>
+                    <option value="Social">Social</option>
+                  </select>
+                </label>
+                <label>
+                  Coordinator *
+                  <input
+                    value={clubForm.coordinator}
+                    onChange={(e) => setClubForm({ ...clubForm, coordinator: e.target.value })}
+                    required
+                  />
+                </label>
+                <label>
+                  Schedule
+                  <input
+                    value={clubForm.meetingSchedule}
+                    onChange={(e) => setClubForm({ ...clubForm, meetingSchedule: e.target.value })}
+                  />
+                </label>
+              </div>
+              <label>
+                Description *
+                <textarea
+                  className="notice-textarea"
+                  value={clubForm.description}
+                  onChange={(e) => setClubForm({ ...clubForm, description: e.target.value })}
+                  rows={2}
+                  required
+                />
+              </label>
+              <div className="form-actions">
+                <button type="button" className="btn-ghost" onClick={() => setShowClubForm(false)}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn-sm">
+                  Register Club
+                </button>
+              </div>
+            </form>
+          )}
+
+          <div className="admin-table-wrap">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Club Name</th>
+                  <th>Category</th>
+                  <th>Coordinator</th>
+                  <th>Meeting Schedule</th>
+                  <th>Members</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {clubs.map((c) => (
+                  <tr key={c._id}>
+                    <td>
+                      <span style={{ marginRight: "0.4rem" }}>{c.icon || "🎯"}</span>
+                      <strong>{c.name}</strong>
+                    </td>
+                    <td><span className="badge badge-purple">{c.category}</span></td>
+                    <td>{c.coordinator}</td>
+                    <td className="muted">{c.meetingSchedule || "Weekly"}</td>
+                    <td>👥 {c.members?.length || 1}</td>
+                    <td>
+                      <button
+                        type="button"
+                        className="btn-action-del"
+                        onClick={() => handleDeleteClub(c._id)}
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+
+      {/* ── TAB 8: MARKETPLACE MODERATION ── */}
+      {tab === "Marketplace" && (
+        <section className="panel">
+          <div className="panel-head">
+            <h2>Campus Marketplace Listings Moderation ({marketItems.length})</h2>
+          </div>
+          <div className="admin-table-wrap">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Item Title</th>
+                  <th>Category</th>
+                  <th>Price</th>
+                  <th>Condition</th>
+                  <th>Seller</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {marketItems.map((it) => (
+                  <tr key={it._id}>
+                    <td><strong>{it.title}</strong></td>
+                    <td><span className="badge badge-blue">{it.category}</span></td>
+                    <td><strong>₹{it.price}</strong></td>
+                    <td>{it.condition}</td>
+                    <td className="muted">{it.sellerName}</td>
+                    <td>
+                      <button
+                        type="button"
+                        className={"badge " + (it.status === "Sold" ? "badge-red" : "badge-green")}
+                        style={{ cursor: "pointer", border: 0 }}
+                        onClick={() => handleToggleMarketStatus(it)}
+                      >
+                        {it.status}
+                      </button>
+                    </td>
+                    <td>
+                      <button
+                        type="button"
+                        className="btn-action-del"
+                        onClick={() => handleDeleteMarketItem(it._id)}
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+
+      {/* ── TAB 9: LOST & FOUND MODERATION ── */}
+      {tab === "Lost & Found" && (
+        <section className="panel">
+          <div className="panel-head">
+            <h2>Lost & Found Reports Moderation ({lostFound.length})</h2>
+          </div>
+          <div className="admin-table-wrap">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>Item Title</th>
+                  <th>Category</th>
+                  <th>Location</th>
+                  <th>Contact Info</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {lostFound.map((lf) => (
+                  <tr key={lf._id}>
+                    <td>
+                      <span className={"badge " + (lf.type === "lost" ? "badge-amber" : "badge-green")}>
+                        {lf.type.toUpperCase()}
+                      </span>
+                    </td>
+                    <td><strong>{lf.title}</strong></td>
+                    <td>{lf.category}</td>
+                    <td className="muted">{lf.location}</td>
+                    <td className="small">{lf.contactInfo}</td>
+                    <td>
+                      <button
+                        type="button"
+                        className={"badge " + (lf.status === "resolved" ? "badge-blue" : "badge-red")}
+                        style={{ cursor: "pointer", border: 0 }}
+                        onClick={() => handleToggleLostStatus(lf)}
+                      >
+                        {lf.status}
+                      </button>
+                    </td>
+                    <td>
+                      <button
+                        type="button"
+                        className="btn-action-del"
+                        onClick={() => handleDeleteLostFound(lf._id)}
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+    </div>
   );
 }
 
@@ -2552,6 +3680,22 @@ function Dashboard({ user, onLogout, onProfileUpdated }) {
               {n}
             </button>
           ))}
+          {user.role === "admin" && (
+            <button
+              type="button"
+              style={{
+                background: page === "Admin Panel" ? "#991b1b" : "rgba(220, 38, 38, 0.25)",
+                color: "#fff",
+                fontWeight: 700,
+                border: "1px solid rgba(254, 202, 202, 0.4)",
+                marginTop: "0.5rem",
+              }}
+              className={page === "Admin Panel" ? "active" : ""}
+              onClick={() => setPage("Admin Panel")}
+            >
+              🛡️ Admin Control Panel
+            </button>
+          )}
         </nav>
         <div className="me">
           <div>
@@ -2568,6 +3712,25 @@ function Dashboard({ user, onLogout, onProfileUpdated }) {
       <main>
         {page === "Home" && (
           <>
+            {user.role === "admin" && (
+              <div style={{ background: "#fef2f2", border: "1px solid #fecaca", borderRadius: "12px", padding: "0.8rem 1.1rem", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.5rem" }}>
+                <div>
+                  <strong style={{ color: "var(--red)", fontSize: "0.95rem" }}>🛡️ System Administrator Session Active</strong>
+                  <span className="small muted" style={{ display: "block", marginTop: "0.15rem" }}>
+                    Manage user accounts, publish university notices, and moderate campus submissions.
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  className="btn-sm"
+                  style={{ background: "var(--red)" }}
+                  onClick={() => setPage("Admin Panel")}
+                >
+                  Open Admin Control Panel ➜
+                </button>
+              </div>
+            )}
+
             <header className="hero">
               <div>
                 <h1>Welcome back, {user.name.split(" ")[0]}!</h1>
@@ -2680,6 +3843,10 @@ function Dashboard({ user, onLogout, onProfileUpdated }) {
         {page === "AI Assistant" && <AiAssistant user={user} />}
 
         {page === "Profile" && <ProfileManager user={user} onProfileUpdated={onProfileUpdated} />}
+
+        {page === "Admin Panel" && (
+          <AdminDashboard user={user} onSwitchToStudent={() => setPage("Home")} />
+        )}
       </main>
     </div>
   );

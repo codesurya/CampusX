@@ -6,11 +6,21 @@ CampusX is an all-in-one digital campus ecosystem engineered with the MERN stack
 
 ## 🌟 Key Modules & Features
 
-### 1. 🔐 Authentication & Role Management
+### 1. 🔐 Authentication & Role-Based Access Control (RBAC)
 - Secure user registration and login with JWT (JSON Web Tokens) and bcrypt password hashing.
-- Role-based authorization (`student` and `admin`).
-- Safe demo role switcher directly in user profile for instant testing of admin moderation controls.
+- Strict role-based authorization (`student` and `admin`).
+- Public registration strictly assigns `student` role; client-supplied role values are completely ignored.
 - User-specific private data isolation.
+
+### 2. 🛡️ Administrator Control Panel (Campus Governance)
+- Complete standalone administrative dashboard for authorized campus staff and faculty.
+- System health overview & metrics (registered students, admins, attendance records, timetable slots, notices, notes, events, clubs, marketplace listings, lost & found reports).
+- Student Account Management: search students, promote/demote roles, and remove accounts with automatic cascade clean-up of academic records.
+- Official Circulars Management: publish, update, and remove university notices with priority badges.
+- Academic Routine & NotesHub moderation.
+- Campus Events and Student Societies oversight.
+- Marketplace & Lost/Found moderation with confirmation dialogs.
+- Self-demotion and self-deletion safeguards prevent accidental admin lockout.
 
 ### 2. 📊 Attendance Tracker (75% Minimum Criteria Engine)
 - Subject-wise attendance calculation with visual status bars and color-coded risk alerts.
@@ -192,6 +202,26 @@ npm.cmd run dev
 ```powershell
 Start-Process powershell -ArgumentList "-NoExit -Command cd 'c:\Users\Surya Bhadoriya\OneDrive\Documents\campusX\server'; npm.cmd start" ; Start-Process powershell -ArgumentList "-NoExit -Command cd 'c:\Users\Surya Bhadoriya\OneDrive\Documents\campusX\client'; npm.cmd run dev"
 ```
+
+---
+
+## 🛡️ Creating the First Administrator Account
+
+For security, public registration strictly creates `student` accounts. To create your first verified Administrator or promote an existing account, use the protected setup CLI script:
+
+```bash
+cd server
+node scripts/createAdmin.js <email> <password> [fullName]
+```
+
+**Example:**
+```bash
+node scripts/createAdmin.js admin@campusx.edu CampusAdmin2026 "Campus Executive Admin"
+```
+
+- If the user already exists, their account is elevated to `role: "admin"` and password updated.
+- If the account does not exist, a new administrator record is securely initialized.
+- Sign in with these credentials at `http://localhost:4028/` to access the **🛡️ Admin Control Panel**.
 
 ---
 

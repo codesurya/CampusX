@@ -9,7 +9,7 @@ const eventSchema = new mongoose.Schema(
     venue: { type: String, required: true, trim: true },
     category: {
       type: String,
-      enum: ["Technical", "Cultural", "Sports", "Workshop", "Seminar", "Other"],
+      enum: ["Technical", "Cultural", "Sports", "Workshop", "Seminar", "Academic", "Other"],
       default: "Technical",
     },
     organizer: { type: String, default: "Student Council", trim: true },

@@ -14,25 +14,26 @@ const makeToken = (user) =>
   );
 
 // POST /api/auth/register
+// Public registration strictly assigns 'student' role. Admin accounts must be created via secure CLI script.
 router.post("/register", async (req, res) => {
   try {
-    const { name, email, password, collegeId, branch, semester, role } = req.body;
+    const { name, email, password, collegeId, branch, semester } = req.body;
     if (!name || !email || !password)
       return res.status(400).json({ message: "Name, email and password required" });
 
-    if (await User.findOne({ email }))
+    if (await User.findOne({ email: email.toLowerCase().trim() }))
       return res.status(400).json({ message: "Email already registered" });
 
     const hashed = await bcrypt.hash(password, 10);
-    const userRole = role === "admin" ? "admin" : "student";
+    // Explicitly enforce student role for public registration
     const user = await User.create({
-      name,
-      email,
+      name: name.trim(),
+      email: email.toLowerCase().trim(),
       password: hashed,
-      collegeId: collegeId || "",
+      collegeId: collegeId ? collegeId.trim() : "",
       branch: branch || "B.Tech CSE",
       semester: Number(semester) || 1,
-      role: userRole,
+      role: "student",
     });
 
     res.status(201).json({
@@ -88,16 +89,16 @@ router.get("/me", auth, async (req, res) => {
   }
 });
 
-// PUT /api/auth/profile (protected) - update profile or toggle demo admin role
+// PUT /api/auth/profile (protected) - update profile details
+// Note: Users CANNOT alter their own role. Role promotion is strictly restricted to verified Admins or CLI.
 router.put("/profile", auth, async (req, res) => {
   try {
-    const { name, collegeId, branch, semester, role } = req.body;
+    const { name, collegeId, branch, semester } = req.body;
     const updates = {};
     if (name) updates.name = name.trim();
     if (collegeId !== undefined) updates.collegeId = collegeId.trim();
     if (branch) updates.branch = branch.trim();
     if (semester) updates.semester = Number(semester);
-    if (role && (role === "admin" || role === "student")) updates.role = role;
 
     const user = await User.findByIdAndUpdate(req.user.id, updates, {
       new: true,
