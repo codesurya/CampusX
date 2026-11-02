@@ -7,8 +7,8 @@ Use this structured slide deck directly for your college project viva, presentat
 ### Slide 1: Title Slide
 **Title:** CampusX – AI-Powered Digital Campus Ecosystem for Students  
 **Subtitle:** A Modern Full-Stack MERN Academic & Student Engagement Portal  
-**Student Name:** Surya Bhadoriya  
-**Department:** Computer Science & Engineering  
+**Student Name:** Surya Pratap
+**Department:** MATHEMAATICS & COMPUTING
 **Academic Year:** 2026–2027  
 
 *Speaker Notes:*  
