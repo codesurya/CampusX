@@ -1,5 +1,22 @@
 import { useEffect, useState } from "react";
 import { api, getToken, setToken } from "./api";
+import LandingPage from "./LandingPage";
+import {
+  Activity,
+  Calendar,
+  Bell,
+  BookOpen,
+  Sparkles,
+  Users,
+  ShoppingBag,
+  Search,
+  Bot,
+  GraduationCap,
+  Shield,
+  Layers,
+  Globe,
+  X,
+} from "lucide-react";
 
 const NAV = [
   "Home",
@@ -14,6 +31,20 @@ const NAV = [
   "AI Assistant",
   "Profile",
 ];
+
+const NAV_ICONS = {
+  "Home": <Layers size={17} />,
+  "Attendance Tracker": <Activity size={17} />,
+  "Class Routine": <Calendar size={17} />,
+  "Updates": <Bell size={17} />,
+  "NotesHub": <BookOpen size={17} />,
+  "Event & Fest": <Sparkles size={17} />,
+  "Club System": <Users size={17} />,
+  "Campus Marketplace": <ShoppingBag size={17} />,
+  "Lost & Found": <Search size={17} />,
+  "AI Assistant": <Bot size={17} />,
+  "Profile": <GraduationCap size={17} />,
+};
 
 const EVENTS = [
   { title: "TechFest 2026 Hackathon", when: "15 May, 9:00 AM", where: "Main Auditorium" },
@@ -32,8 +63,8 @@ function advice(s) {
   return { risk: false, text: skip > 0 ? `You can skip ${skip} and stay above 75%` : "Right on the 75% line" };
 }
 
-function AuthForm({ onAuth }) {
-  const [mode, setMode] = useState("login");
+function AuthForm({ onAuth, initialMode = "login", onCancel }) {
+  const [mode, setMode] = useState(initialMode);
   const [form, setForm] = useState({ name: "", email: "", password: "", collegeId: "" });
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -58,37 +89,52 @@ function AuthForm({ onAuth }) {
     }
   }
 
-  return (
-    <div className="auth-wrap">
-      <form className="auth-card" onSubmit={submit}>
-        <h1>CampusX</h1>
-        <p className="muted">
-          {mode === "login" ? "Sign in to your campus dashboard." : "Create your student account."}
-        </p>
-        {mode === "register" && (
-          <>
-            <label>
-              Full name
-              <input value={form.name} onChange={set("name")} required />
-            </label>
-            <label>
-              College ID
-              <input value={form.collegeId} onChange={set("collegeId")} placeholder="CSE22B047" />
-            </label>
-          </>
-        )}
-        <label>
-          Email
-          <input type="email" value={form.email} onChange={set("email")} required />
-        </label>
-        <label>
-          Password
-          <input type="password" minLength={6} value={form.password} onChange={set("password")} required />
-        </label>
-        {error && <p className="error" role="alert">{error}</p>}
-        <button className="btn" disabled={busy}>
-          {busy ? "Please wait…" : mode === "login" ? "Sign in" : "Create account"}
+  const card = (
+    <form className={`auth-card ${onCancel ? "auth-modal-card" : ""}`} onSubmit={submit}>
+      {onCancel && (
+        <button
+          type="button"
+          className="auth-modal-close"
+          onClick={onCancel}
+          aria-label="Close"
+        >
+          <X size={18} />
         </button>
+      )}
+      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+        <span className="brand-logo-glow" style={{ width: 30, height: 30 }}>
+          <Sparkles size={16} />
+        </span>
+        <h1 style={{ margin: 0, fontSize: "1.7rem" }}>CampusX</h1>
+      </div>
+      <p className="muted">
+        {mode === "login" ? "Sign in to access your student workspace." : "Create your student account."}
+      </p>
+      {mode === "register" && (
+        <>
+          <label>
+            Full name
+            <input value={form.name} onChange={set("name")} required placeholder="e.g. Rahul Sharma" />
+          </label>
+          <label>
+            College ID
+            <input value={form.collegeId} onChange={set("collegeId")} placeholder="e.g. 0901CS221045" />
+          </label>
+        </>
+      )}
+      <label>
+        Email
+        <input type="email" value={form.email} onChange={set("email")} required placeholder="student@college.edu" />
+      </label>
+      <label>
+        Password
+        <input type="password" minLength={6} value={form.password} onChange={set("password")} required placeholder="••••••••" />
+      </label>
+      {error && <p className="error" role="alert">{error}</p>}
+      <button className="btn" style={{ padding: "0.85rem", fontSize: "0.95rem" }} disabled={busy}>
+        {busy ? "Authenticating…" : mode === "login" ? "Sign in to Workspace" : "Create Account"}
+      </button>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "0.2rem" }}>
         <button
           type="button"
           className="link"
@@ -99,9 +145,20 @@ function AuthForm({ onAuth }) {
         >
           {mode === "login" ? "New here? Create an account" : "Have an account? Sign in"}
         </button>
-      </form>
-    </div>
+        {onCancel && (
+          <button type="button" className="link" onClick={onCancel} style={{ color: "var(--muted)" }}>
+            ← Back
+          </button>
+        )}
+      </div>
+    </form>
   );
+
+  if (onCancel) {
+    return <div className="auth-modal-overlay">{card}</div>;
+  }
+
+  return <div className="auth-wrap">{card}</div>;
 }
 
 function AttendanceTracker({
@@ -3561,7 +3618,7 @@ function AdminDashboard({ user, onSwitchToStudent }) {
 }
 
 // ─── Dashboard ──────────────────────────────────────────────────────────────
-function Dashboard({ user, onLogout, onProfileUpdated }) {
+function Dashboard({ user, onLogout, onProfileUpdated, onViewLanding }) {
   const [page, setPage] = useState("Home");
   const [subjects, setSubjects] = useState([]);
   const [loadingAtt, setLoadingAtt] = useState(true);
@@ -3668,16 +3725,34 @@ function Dashboard({ user, onLogout, onProfileUpdated }) {
   return (
     <div className="shell">
       <aside className="side">
-        <div className="brand">CampusX</div>
+        <div className="brand" style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+          <span className="brand-logo-glow" style={{ width: 28, height: 28 }}>
+            <Sparkles size={16} />
+          </span>
+          <span>CampusX</span>
+        </div>
         <nav>
+          {onViewLanding && (
+            <button
+              type="button"
+              className="dash-landing-toggle-btn"
+              style={{ width: "100%", justifyContent: "flex-start", marginBottom: "0.5rem" }}
+              onClick={onViewLanding}
+            >
+              <Globe size={15} />
+              <span>🌐 Landing Page</span>
+            </button>
+          )}
           {NAV.map((n) => (
             <button
               key={n}
               type="button"
               className={n === page ? "active" : ""}
+              style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}
               onClick={() => setPage(n)}
             >
-              {n}
+              {NAV_ICONS[n]}
+              <span>{n}</span>
             </button>
           ))}
           {user.role === "admin" && (
@@ -3689,11 +3764,15 @@ function Dashboard({ user, onLogout, onProfileUpdated }) {
                 fontWeight: 700,
                 border: "1px solid rgba(254, 202, 202, 0.4)",
                 marginTop: "0.5rem",
+                display: "flex",
+                alignItems: "center",
+                gap: "0.6rem",
               }}
               className={page === "Admin Panel" ? "active" : ""}
               onClick={() => setPage("Admin Panel")}
             >
-              🛡️ Admin Control Panel
+              <Shield size={16} />
+              <span>🛡️ Admin Control Panel</span>
             </button>
           )}
         </nav>
@@ -3732,17 +3811,29 @@ function Dashboard({ user, onLogout, onProfileUpdated }) {
             )}
 
             <header className="hero">
-              <div>
-                <h1>Welcome back, {user.name.split(" ")[0]}!</h1>
-                <p>
-                  {new Date().toLocaleDateString("en-IN", {
-                    weekday: "long",
-                    day: "numeric",
-                    month: "long",
-                    year: "numeric",
-                  })}{" "}
-                  · {user.branch} · Semester {user.semester || 1}
-                </p>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "1rem", width: "100%" }}>
+                <div>
+                  <h1 style={{ margin: "0 0 0.3rem" }}>Welcome back, {user.name.split(" ")[0]}!</h1>
+                  <p style={{ margin: 0 }}>
+                    {new Date().toLocaleDateString("en-IN", {
+                      weekday: "long",
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    })}{" "}
+                    · {user.branch} · Semester {user.semester || 1}
+                  </p>
+                </div>
+                {onViewLanding && (
+                  <button
+                    type="button"
+                    className="dash-landing-toggle-btn"
+                    onClick={onViewLanding}
+                  >
+                    <Globe size={14} />
+                    <span>View Landing Page</span>
+                  </button>
+                )}
               </div>
               <div className="chips">
                 <span>
@@ -3855,10 +3946,16 @@ function Dashboard({ user, onLogout, onProfileUpdated }) {
 export default function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(!!getToken());
+  const [currentView, setCurrentView] = useState("landing");
+  const [authModal, setAuthModal] = useState(null);
 
   const load = () =>
     api("/auth/me")
-      .then(setUser)
+      .then((userData) => {
+        setUser(userData);
+        setCurrentView("dashboard");
+        setAuthModal(null);
+      })
       .catch(() => {
         setToken(null);
         setUser(null);
@@ -3872,21 +3969,49 @@ export default function App() {
   if (loading) {
     return (
       <div className="auth-wrap">
-        <p className="muted">Loading…</p>
+        <div style={{ textAlign: "center", color: "#fff" }}>
+          <div className="brand-logo-glow" style={{ margin: "0 auto 1rem", width: 44, height: 44 }}>
+            <Sparkles size={22} />
+          </div>
+          <p style={{ fontWeight: 600, fontSize: "1.05rem", margin: 0 }}>Connecting to CampusX Cloud…</p>
+        </div>
       </div>
     );
   }
 
-  if (!user) return <AuthForm onAuth={load} />;
+  if (user && currentView === "dashboard") {
+    return (
+      <Dashboard
+        user={user}
+        onLogout={() => {
+          setToken(null);
+          setUser(null);
+          setCurrentView("landing");
+        }}
+        onProfileUpdated={(updatedUser) => setUser(updatedUser)}
+        onViewLanding={() => setCurrentView("landing")}
+      />
+    );
+  }
 
   return (
-    <Dashboard
-      user={user}
-      onLogout={() => {
-        setToken(null);
-        setUser(null);
-      }}
-      onProfileUpdated={(updatedUser) => setUser(updatedUser)}
-    />
+    <>
+      <LandingPage
+        user={user}
+        onLaunchDashboard={() => setCurrentView("dashboard")}
+        onOpenAuth={(mode) => setAuthModal(mode || "login")}
+        onLogout={() => {
+          setToken(null);
+          setUser(null);
+        }}
+      />
+      {authModal && (
+        <AuthForm
+          initialMode={authModal}
+          onAuth={load}
+          onCancel={() => setAuthModal(null)}
+        />
+      )}
+    </>
   );
 }
