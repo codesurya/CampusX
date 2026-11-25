@@ -56,7 +56,7 @@ router.get("/stats", async (req, res) => {
       services: { marketplace: totalMarketplace, lostfound: totalLostFound },
     });
   } catch (err) {
-    res.status(500).json({ message: "Failed to fetch admin statistics", error: err.message });
+    res.status(500).json({ message: "Failed to fetch admin statistics" });
   }
 });
 

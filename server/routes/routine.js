@@ -32,7 +32,7 @@ router.get("/", auth, async (req, res) => {
     const entries = await Routine.find({ user: req.user.id }).sort({ day: 1, startTime: 1 });
     res.json(entries);
   } catch (err) {
-    res.status(500).json({ message: "Failed to fetch routine", error: err.message });
+    res.status(500).json({ message: "Failed to fetch routine" });
   }
 });
 
@@ -71,7 +71,7 @@ router.post("/", auth, async (req, res) => {
 
     res.status(201).json(entry);
   } catch (err) {
-    res.status(500).json({ message: "Failed to add routine entry", error: err.message });
+    res.status(500).json({ message: "Failed to add routine entry" });
   }
 });
 
@@ -123,7 +123,7 @@ router.patch("/:id", auth, async (req, res) => {
     if (!entry) return res.status(404).json({ message: "Routine entry not found" });
     res.json(entry);
   } catch (err) {
-    res.status(500).json({ message: "Failed to update routine entry", error: err.message });
+    res.status(500).json({ message: "Failed to update routine entry" });
   }
 });
 
@@ -137,7 +137,7 @@ router.delete("/:id", auth, async (req, res) => {
     if (!entry) return res.status(404).json({ message: "Routine entry not found" });
     res.json({ message: "Routine entry deleted", id: req.params.id });
   } catch (err) {
-    res.status(500).json({ message: "Failed to delete routine entry", error: err.message });
+    res.status(500).json({ message: "Failed to delete routine entry" });
   }
 });
 

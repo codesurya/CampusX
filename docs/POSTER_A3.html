@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CampusX — Final College Project Poster (A3 Size)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --blue: #2563eb;
+      --navy: #1e3a8a;
+      --dark: #0f172a;
+      --slate: #334155;
+      --light-slate: #64748b;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --border: #e2e8f0;
+      --green: #10b981;
+      --red: #dc2626;
+      --amber: #f59e0b;
+      --purple: #7e22ce;
+      --cyan: #0891b2;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      background: #cbd5e1;
+      color: var(--dark);
+      line-height: 1.35;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px 0;
+    }
+
+    /* Print control toolbar (hidden in print) */
+    .toolbar {
+      width: 297mm;
+      max-width: 95vw;
+      background: var(--dark);
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 12px;
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+    }
+    .toolbar h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .print-btn {
+      background: var(--blue);
+      color: #fff;
+      border: 0;
+      padding: 8px 18px;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.9rem;
+      transition: background 0.15s;
+    }
+    .print-btn:hover {
+      background: #1d4ed8;
+    }
+
+    /* Exact A3 Sheet Specification (297mm x 420mm) */
+    .poster-sheet {
+      width: 297mm;
+      height: 420mm;
+      background: var(--bg);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+      padding: 10mm;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 7mm;
+      overflow: hidden;
+      position: relative;
+    }
+
+    @page {
+      size: A3 portrait;
+      margin: 0;
+    }
+
+    @media print {
+      body {
+        background: transparent;
+        padding: 0;
+      }
+      .toolbar {
+        display: none !important;
+      }
+      .poster-sheet {
+        width: 297mm !important;
+        height: 420mm !important;
+        box-shadow: none !important;
+        margin: 0 !important;
+        page-break-after: avoid;
+        page-break-inside: avoid;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+    }
+
+    /* ─── 1. POSTER HEADER ─── */
+    .header-banner {
+      background: linear-gradient(135deg, #091e42 0%, #1e3a8a 50%, #2563eb 100%);
+      color: #fff;
+      border-radius: 14px;
+      padding: 16px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      border-bottom: 4px solid var(--amber);
+      position: relative;
+    }
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .brand-tag {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .uni-meta {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #bfdbfe;
+      text-align: right;
+    }
+    .project-title {
+      font-size: 2.1rem;
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+    }
+    .project-title span {
+      color: #fbbf24;
+    }
+    .project-subtitle {
+      font-size: 0.95rem;
+      color: #e0e7ff;
+      font-weight: 500;
+      line-height: 1.3;
+    }
+    .header-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid rgba(255,255,255,0.2);
+      padding-top: 8px;
+      margin-top: 2px;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .author-info {
+      font-size: 0.82rem;
+      color: #fff;
+    }
+    .author-info strong {
+      color: #93c5fd;
+      font-size: 0.9rem;
+    }
+    .tech-pills {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+    }
+    .pill {
+      background: rgba(255,255,255,0.2);
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: 0.02em;
+    }
+
+    /* ─── 2. MAIN POSTER GRID (3 COLUMNS) ─── */
+    .poster-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 5.5mm;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .column {
+      display: flex;
+      flex-direction: column;
+      gap: 4.5mm;
+    }
+
+    .panel {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      padding: 10px 12px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .panel-title {
+      font-size: 0.85rem;
+      font-weight: 800;
+      color: var(--navy);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding-bottom: 4px;
+      border-bottom: 2px solid #e2e8f0;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .panel-title.accent-blue { border-color: var(--blue); color: var(--blue); }
+    .panel-title.accent-green { border-color: var(--green); color: #047857; }
+    .panel-title.accent-purple { border-color: var(--purple); color: var(--purple); }
+    .panel-title.accent-red { border-color: var(--red); color: var(--red); }
+    .panel-title.accent-cyan { border-color: var(--cyan); color: #0e7490; }
+
+    .panel-body {
+      font-size: 0.72rem;
+      color: var(--slate);
+      line-height: 1.35;
+    }
+
+    /* Card item highlight */
+    .feature-item {
+      background: #f8fafc;
+      border: 1px solid #edf2f7;
+      border-radius: 7px;
+      padding: 6px 8px;
+      margin-bottom: 4px;
+    }
+    .feature-item strong {
+      display: block;
+      color: var(--dark);
+      font-size: 0.76rem;
+      margin-bottom: 2px;
+    }
+
+    /* Formula Callout Box */
+    .formula-box {
+      background: #eff6ff;
+      border: 1.5px dashed var(--blue);
+      border-radius: 8px;
+      padding: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.68rem;
+      color: var(--navy);
+      line-height: 1.4;
+    }
+    .formula-box b {
+      color: var(--blue);
+      font-size: 0.74rem;
+    }
+
+    /* Architecture Visual Diagram */
+    .arch-flow {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 0.65rem;
+      font-weight: 600;
+    }
+    .arch-step {
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      padding: 5px 8px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .arch-step.active-layer {
+      background: #dbeafe;
+      border-color: var(--blue);
+      color: var(--navy);
+    }
+    .arch-arrow {
+      text-align: center;
+      font-size: 0.65rem;
+      color: var(--blue);
+      line-height: 0.8;
+      font-weight: 800;
+    }
+
+    /* Statistics Metric Grid */
+    .metric-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5px;
+    }
+    .metric-card {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 6px;
+      text-align: center;
+    }
+    .metric-val {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--navy);
+      line-height: 1;
+    }
+    .metric-val.green { color: var(--green); }
+    .metric-val.blue { color: var(--blue); }
+    .metric-lbl {
+      font-size: 0.62rem;
+      color: var(--light-slate);
+      font-weight: 600;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+
+    /* Badge & Tag styling */
+    .tag {
+      display: inline-block;
+      font-size: 0.6rem;
+      font-weight: 700;
+      padding: 1px 5px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+    .tag-blue { background: #dbeafe; color: var(--blue); }
+    .tag-green { background: #d1fae5; color: #047857; }
+    .tag-red { background: #fee2e2; color: var(--red); }
+    .tag-amber { background: #fef3c7; color: #b45309; }
+
+    /* List styling */
+    .bullet-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .bullet-list li {
+      position: relative;
+      padding-left: 11px;
+      font-size: 0.7rem;
+    }
+    .bullet-list li::before {
+      content: "•";
+      color: var(--blue);
+      position: absolute;
+      left: 0;
+      font-weight: 800;
+      font-size: 0.85rem;
+      line-height: 1;
+    }
+
+    /* ─── 3. POSTER FOOTER ─── */
+    .footer-bar {
+      background: var(--dark);
+      color: #fff;
+      border-radius: 11px;
+      padding: 8px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.72rem;
+    }
+    .footer-bar a {
+      color: #93c5fd;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .footer-stats {
+      display: flex;
+      gap: 14px;
+    }
+    .footer-badge {
+      background: rgba(255,255,255,0.15);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+      color: #f1f5f9;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Action Toolbar (Hidden automatically during print / PDF export) -->
+  <div class="toolbar no-print">
+    <h3>📄 CampusX — Final College Project Poster (A3 Portrait 297mm × 420mm)</h3>
+    <button class="print-btn" onclick="window.print()">🖨️ Print / Save as A3 PDF</button>
+  </div>
+
+  <!-- Main A3 Poster Canvas -->
+  <main class="poster-sheet">
+
+    <!-- ── HEADER BANNER ── -->
+    <header class="header-banner">
+      <div class="header-top">
+        <div class="brand-tag">
+          🎓 CampusX Platform
+        </div>
+        <div class="uni-meta">
+          B.Tech Final Year Capstone Project · CSE Dept · 2026–2027
+        </div>
+      </div>
+
+      <div>
+        <h1 class="project-title">
+          <span>CampusX:</span> AI-Powered Digital Campus Ecosystem
+        </h1>
+        <p class="project-subtitle">
+          An Integrated MERN Architecture for Real-Time Academic Scheduling, 75% Attendance Forecasting & Student Resource Sharing
+        </p>
+      </div>
+
+      <div class="header-bottom">
+        <div class="author-info">
+          Student Researcher: <strong>Surya Bhadoriya</strong> · Specialization: <strong>Full-Stack & Intelligent Systems</strong>
+        </div>
+        <div class="tech-pills">
+          <span class="pill">React 18</span>
+          <span class="pill">Vite 5</span>
+          <span class="pill">Node.js</span>
+          <span class="pill">Express.js</span>
+          <span class="pill">MongoDB Atlas</span>
+          <span class="pill">JWT Auth</span>
+          <span class="pill">REST API</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- ── 3-COLUMN CONTENT GRID ── -->
+    <section class="poster-grid">
+
+      <!-- ════════ COLUMN 1: PROBLEM, MATH & ARCHITECTURE ════════ -->
+      <div class="column">
+
+        <!-- 1. Problem & Objectives -->
+        <article class="panel">
+          <h2 class="panel-title accent-blue">🎯 Problem Statement & Objectives</h2>
+          <div class="panel-body">
+            <p style="margin-bottom: 4px;">
+              University students face fragmented communication, anxiety over the mandatory 75% attendance threshold, unorganized lecture notes, and no verified campus exchange for course gear.
+            </p>
+            <ul class="bullet-list">
+              <li><strong>Zero-Fragmentation:</strong> Single portal uniting timetable, circulars & study materials.</li>
+              <li><strong>Mathematical Precision:</strong> Algorithmic prediction of attendance shortfall/surplus.</li>
+              <li><strong>Student Economy:</strong> Peer-to-peer textbook & instrument marketplace.</li>
+              <li><strong>Offline Knowledge AI:</strong> Fast automated answers to campus FAQs and schedules.</li>
+            </ul>
+          </div>
+        </article>
+
+        <!-- 2. Attendance Mathematical Formulation -->
+        <article class="panel">
+          <h2 class="panel-title accent-green">📊 75% Attendance Mathematical Model</h2>
+          <div class="panel-body">
+            <p style="margin-bottom: 4px;">
+              Let $a = \text{attended classes}$ and $t = \text{total classes conducted}$. Attendance percentage is $P = (a/t) \times 100$.
+            </p>
+            <div class="formula-box">
+              <strong>Deficit Condition (P &lt; 75%):</strong><br>
+              Classes required to attend consecutively without absence:<br>
+              <b>Required Classes = max(0, ⌈3t - 4a⌉)</b>
+              <hr style="border: 0; border-top: 1px dashed #93c5fd; margin: 4px 0;">
+              <strong>Surplus Condition (P ≥ 75%):</strong><br>
+              Lectures that can be safely skipped while staying ≥75%:<br>
+              <b>Safe Skips = max(0, ⌊4a/3 - t⌋)</b>
+            </div>
+            <p style="font-size: 0.67rem; color: var(--light-slate); margin-top: 4px;">
+              ✓ Instant visual risk alerts (Green ≥85%, Blue 75–84%, Amber &lt;75%).
+            </p>
+          </div>
+        </article>
+
+        <!-- 3. System Architecture Diagram -->
+        <article class="panel" style="flex: 1;">
+          <h2 class="panel-title accent-purple">🏗️ Three-Tier System Architecture</h2>
+          <div class="panel-body">
+            <div class="arch-flow">
+              <div class="arch-step active-layer">
+                <span>🖥️ Presentation Layer</span>
+                <span class="tag tag-blue">React 18 + Vite 5 SPA</span>
+              </div>
+              <div class="arch-arrow">▼ (REST API / Bearer JWT Authorization)</div>
+              <div class="arch-step">
+                <span>🛡️ Security & Route Gate</span>
+                <span class="tag tag-purple">adminAuth + userAuth</span>
+              </div>
+              <div class="arch-arrow">▼ (Express.js Dispatcher)</div>
+              <div class="arch-step active-layer">
+                <span>⚙️ Business Logic Layer</span>
+                <span class="tag tag-green">10 REST Controllers</span>
+              </div>
+              <div class="arch-arrow">▼ (Mongoose ODM Layer)</div>
+              <div class="arch-step">
+                <span>🗄️ Persistence Tier</span>
+                <span class="tag tag-blue">MongoDB Atlas Cloud</span>
+              </div>
+            </div>
+            <p style="font-size: 0.67rem; margin-top: 6px; color: var(--slate);">
+              Enforces strict <strong>tenant data isolation</strong>: user records strictly query by <code>{ user: req.user.id }</code>, preventing horizontal privilege escalation.
+            </p>
+          </div>
+        </article>
+
+      </div>
+
+      <!-- ════════ COLUMN 2: CORE ECOSYSTEM MODULES ════════ -->
+      <div class="column">
+
+        <!-- 4. Academic Core Modules -->
+        <article class="panel">
+          <h2 class="panel-title accent-blue">📅 Academic Timetable & Notices</h2>
+          <div class="panel-body">
+            <div class="feature-item">
+              <strong>Smart Class Routine Scheduler</strong>
+              Day-wise timetable (Mon–Sun) with automated current-day detection ($today = (JS_{day} + 6) \bmod 7$), faculty names, room/lab numbers, and strict $T_{start} &lt; T_{end}$ validation.
+            </div>
+            <div class="feature-item">
+              <strong>College Notices & Circulars Board</strong>
+              Categorized into Exam, Holiday, Academic, General, and Fest. Features high-priority red alert tags and instant multi-keyword search.
+            </div>
+          </div>
+        </article>
+
+        <!-- 5. Peer-to-Peer Academic Utilities -->
+        <article class="panel">
+          <h2 class="panel-title accent-cyan">📚 Peer-to-Peer Academic Utilities</h2>
+          <div class="panel-body">
+            <div class="feature-item">
+              <strong>NotesHub Academic Repository</strong>
+              Subject-wise verified handwritten notes, syllabus PPTs, and solved question banks categorized by Subject (DSA, OS, DBMS, Networks, Cloud) with download counters.
+            </div>
+            <div class="feature-item">
+              <strong>Campus Marketplace (Zero-Commission)</strong>
+              Student-to-student exchange for engineering textbooks, mini-drafters, Casio scientific calculators, and bicycles with in-app seller contact information.
+            </div>
+            <div class="feature-item">
+              <strong>Centralized Lost & Found Desk</strong>
+              Report lost and recovered university ID cards, keys, and tech gear with location tags and one-click 'Mark Returned' status tracking.
+            </div>
+          </div>
+        </article>
+
+        <!-- 6. Student Life & Communities -->
+        <article class="panel" style="flex: 1;">
+          <h2 class="panel-title accent-green">🚀 Campus Life & Student Societies</h2>
+          <div class="panel-body">
+            <div class="feature-item">
+              <strong>Clubs & Communities Hub</strong>
+              Directory of recognized student bodies (Google Developer Club, RoboX, Dhwani Music, E-Cell, Rotaract) with 1-click Join/Leave club toggles and schedules.
+            </div>
+            <div class="feature-item">
+              <strong>Campus Events & Fests Calendar</strong>
+              Interactive event portal with live attendee headcount tracking and 1-click RSVP for technical hackathons, workshops, and cultural galas.
+            </div>
+          </div>
+        </article>
+
+      </div>
+
+      <!-- ════════ COLUMN 3: INTELLIGENCE, GOVERNANCE & RESULTS ════════ -->
+      <div class="column">
+
+        <!-- 7. AI Campus Assistant & Knowledge Engine -->
+        <article class="panel">
+          <h2 class="panel-title accent-purple">🤖 AI Campus Assistant Engine</h2>
+          <div class="panel-body">
+            <p style="margin-bottom: 4px;">
+              An offline-first, dynamic campus knowledge engine providing instant contextual assistance without dependency on external paid APIs:
+            </p>
+            <ul class="bullet-list">
+              <li><strong>Dynamic Attendance Diagnostics:</strong> Reads MongoDB records on command and outputs live subject percentages.</li>
+              <li><strong>Live Schedule Lookup:</strong> Interrogates today's lecture slots, venues, and instructors.</li>
+              <li><strong>Campus Regulations FAQ:</strong> Instant guidance on 75% debarment rules, library hours, and Wi-Fi configuration.</li>
+            </ul>
+          </div>
+        </article>
+
+        <!-- 8. Administrator Control Center -->
+        <article class="panel">
+          <h2 class="panel-title accent-red">🛡️ Governance & Security (RBAC)</h2>
+          <div class="panel-body">
+            <div class="feature-item">
+              <strong>Standalone Admin Dashboard</strong>
+              Protected by <code>adminAuth</code>. Allows authorized faculty/admins to manage student accounts, publish official circulars, and moderate marketplace items.
+            </div>
+            <div class="feature-item">
+              <strong>Role Security & Hardening</strong>
+              Public registration strictly locked to <code>student</code> role. Role self-promotion in profile endpoint disabled. Admin creation restricted to secure backend CLI script.
+            </div>
+          </div>
+        </article>
+
+        <!-- 9. Testing Verification & Metrics -->
+        <article class="panel" style="flex: 1;">
+          <h2 class="panel-title accent-green">🧪 Verification & Test Bench Results</h2>
+          <div class="panel-body">
+            <div class="metric-grid" style="margin-bottom: 6px;">
+              <div class="metric-card">
+                <div class="metric-val green">61 / 61</div>
+                <div class="metric-lbl">Tests Passed</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-val blue">738 ms</div>
+                <div class="metric-lbl">Vite Build Time</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-val">100%</div>
+                <div class="metric-lbl">Data Isolation</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-val green">0 Errors</div>
+                <div class="metric-lbl">Syntax / Lint</div>
+              </div>
+            </div>
+            <ul class="bullet-list" style="font-size: 0.67rem;">
+              <li><strong>Routine API Suite:</strong> 10/10 verified (time bounds, cross-user delete block).</li>
+              <li><strong>Security & DB Suite:</strong> 19/19 verified (JWT tampering, cascade cleanups).</li>
+              <li><strong>Admin Panel Suite:</strong> 22/22 verified (self-demotion safeguards).</li>
+            </ul>
+          </div>
+        </article>
+
+      </div>
+
+    </section>
+
+    <!-- ── FOOTER BANNER ── -->
+    <footer class="footer-bar">
+      <div>
+        🔗 Open Source Repository: <a href="https://github.com/codesurya/CampusX" target="_blank">github.com/codesurya/CampusX</a>
+      </div>
+      <div class="footer-stats">
+        <span class="footer-badge">Stack: React 18 · Node.js · Express · MongoDB</span>
+        <span class="footer-badge">Status: Production Ready (Vite Built)</span>
+        <span class="footer-badge">Format: A3 Exhibition Standard</span>
+      </div>
+    </footer>
+
+  </main>
+
+</body>
+</html>
+

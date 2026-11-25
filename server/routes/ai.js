@@ -115,7 +115,7 @@ router.post("/chat", auth, async (req, res) => {
       engine: "CampusX Offline Knowledge Engine",
     });
   } catch (err) {
-    res.status(500).json({ message: "AI Assistant temporarily unavailable", error: err.message });
+    res.status(500).json({ message: "AI Assistant temporarily unavailable" });
   }
 });
 

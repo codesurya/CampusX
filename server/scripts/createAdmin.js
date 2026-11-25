@@ -37,10 +37,7 @@ async function run() {
 
   try {
     console.log("Connecting to MongoDB Atlas...");
-    await mongoose.connect(process.env.MONGO_URI, {
-      tls: true,
-      tlsAllowInvalidCertificates: true,
-    });
+    await mongoose.connect(process.env.MONGO_URI);
     console.log("Connected to database successfully.");
 
     let user = await User.findOne({ email });

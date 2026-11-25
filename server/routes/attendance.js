@@ -33,7 +33,7 @@ router.get("/", auth, async (req, res) => {
 
     res.json(subjects);
   } catch (err) {
-    res.status(500).json({ message: "Failed to fetch attendance", error: err.message });
+    res.status(500).json({ message: "Failed to fetch attendance" });
   }
 });
 
@@ -66,7 +66,7 @@ router.post("/", auth, async (req, res) => {
 
     res.status(201).json(newSubject);
   } catch (err) {
-    res.status(500).json({ message: "Failed to add subject", error: err.message });
+    res.status(500).json({ message: "Failed to add subject" });
   }
 });
 
@@ -101,7 +101,7 @@ router.patch("/:id/mark", auth, async (req, res) => {
 
     res.json(subject);
   } catch (err) {
-    res.status(500).json({ message: "Failed to update attendance", error: err.message });
+    res.status(500).json({ message: "Failed to update attendance" });
   }
 });
 
@@ -122,7 +122,7 @@ router.delete("/:id", auth, async (req, res) => {
 
     res.json({ message: "Subject removed successfully", id: req.params.id });
   } catch (err) {
-    res.status(500).json({ message: "Failed to delete subject", error: err.message });
+    res.status(500).json({ message: "Failed to delete subject" });
   }
 });
 
